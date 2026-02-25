@@ -31,8 +31,9 @@ canvas{display:block;position:fixed;top:0;left:0}
   width:100%;max-width:680px;margin-bottom:16px}
 .sel-card{background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.12);
   border-radius:14px;padding:10px 6px 8px;cursor:pointer;transition:.2s;text-align:center}
-.sel-card:hover{border-color:rgba(241,196,15,.7);transform:translateY(-3px)}
+.sel-card:hover:not(.locked){border-color:rgba(241,196,15,.7);transform:translateY(-3px)}
 .sel-card.active{border-color:#f1c40f;background:rgba(241,196,15,.1)}
+.sel-card.locked{border-color:rgba(255,255,255,.05);opacity:.7}
 .sel-card canvas{display:block;margin:0 auto 6px;width:54px;height:54px}
 .sel-card .cname{font-size:11px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,.7)}
 .sel-card.active .cname{color:#f1c40f}
@@ -234,12 +235,14 @@ function checkRotate(){
 // ══════════════════════════════════════════
 let GRAV, JUMP, SPEED, GAP, PIPE_INT;
 function recalcPhysics(){
+  // sc масштабирует только GAP и PIPE_INT под размер экрана,
+  // но НЕ скорость — она одинакова на всех устройствах
   const sc = Math.min(W, H*16/9) / 800;
-  GRAV     = 0.20 * sc;
-  JUMP     = -5.5 * sc;
-  SPEED    = 3.0  * sc;
-  GAP      = Math.max(150, 230*(H/450));
-  PIPE_INT = Math.round(110/sc);
+  GRAV     = 0.15;          // одинаково везде, медленнее
+  JUMP     = -4.2;          // одинаково везде
+  SPEED    = 2.2;           // одинаково везде, медленнее
+  GAP      = Math.max(160, 240*(H/450));   // зазор под высоту экрана
+  PIPE_INT = Math.round(360/sc);           // частота под размер экрана
 }
 
 // ══════════════════════════════════════════
@@ -264,7 +267,23 @@ let tapBlink = 0;
 
 // Уровень сложности
 let level = 1;
-let lastLevelScore = 0; // счёт при последнем повышении уровня
+let lastLevelScore = 0;
+
+// Бонусы на экране
+let bonuses = [];
+// Активные бонусы на игроке
+let activeShield  = 0;  // кадров осталось
+let activeGhost   = 0;  // проход сквозь трубы
+let activeGun     = 0;  // уничтожение труб
+
+// Разблокировка птиц
+let unlockFlash     = 0;
+let unlockFlashBird = 0;
+
+// Тряска экрана
+let shakeDur   = 0;  // кадров осталось
+let shakeAmp   = 0;  // амплитуда
+let activeSlow = 0;  // замедление
 
 // ══════════════════════════════════════════
 // ИНИЦИАЛИЗАЦИЯ МИРА
@@ -274,7 +293,7 @@ function initWorld(){
   bird = {x:W*0.22, y:H/2, v:0, wing:0};
   pipes=[];trails=[];particles=[];
   score=0; frame=0; combo=0; comboTimer=0; level=1; lastLevelScore=0;
-  lightFlash=0; tapBlink=0;
+  lightFlash=0; tapBlink=0; bonuses=[]; activeShield=0; activeGhost=0; activeGun=0; activeSlow=0; shakeDur=0; shakeAmp=0; unlockFlash=0;
 
   document.getElementById('hud-score').textContent = '0';
   document.getElementById('hud-combo').style.opacity = '0';
@@ -422,7 +441,7 @@ function getDifficulty(){
   return {
     lvl,
     // Скорость: от базовой до +90%
-    spd:  SPEED * (1 + t * 0.9),
+    spd:  SPEED * (1 + t * 0.9) * (activeSlow>0 ? 0.45 : 1),
     // Зазор между трубами: от GAP до GAP*0.52 (почти вдвое уже)
     gap:  GAP * (1 - t * 0.48),
     // Интервал между трубами: чаще появляются
@@ -461,6 +480,12 @@ function updateGame(){
 
   if(comboTimer>0) comboTimer--;
   else if(combo>0){ combo=0; updateComboUI(); }
+  if(activeShield>0) activeShield--;
+  if(activeGhost>0)  activeGhost--;
+  if(activeGun>0)    activeGun--;
+  if(activeSlow>0)   activeSlow--;
+  if(shakeDur>0)     shakeDur--;
+  updateBonuses();
 
   const br = Math.min(W,H)/520*9;
 
@@ -469,8 +494,28 @@ function updateGame(){
     p.x -= diff.spd;
 
     const py = p.top ? 0 : H-p.h;
-    if(bird.x+br > p.x && bird.x-br < p.x+p.w &&
+    // Gun — уничтожаем трубу при касании
+    if(activeGun>0 && bird.x+br > p.x && bird.x-br < p.x+p.w){
+      // Взрыв трубы
+      for(let ei=0;ei<8;ei++) particles.push({
+        x:p.x+p.w/2, y:py+p.h/2,
+        vx:(Math.random()-.5)*8, vy:(Math.random()-.5)*8,
+        r:4+Math.random()*5, col:'#e74c3c', life:1
+      });
+      pipes.splice(i,1); continue;
+    }
+    // Ghost — проходим сквозь
+    if(activeGhost>0){
+      // рисуем трубу полупрозрачно — не коллизия
+    } else if(bird.x+br > p.x && bird.x-br < p.x+p.w &&
        bird.y+br > py  && bird.y-br < py+p.h){
+      if(activeShield>0){
+        // Щит поглощает удар
+        activeShield=0;
+        lightFlash=8;
+        shakeDur=20; shakeAmp=6;
+        pipes.splice(i,1); continue;
+      }
       triggerDeath(); return;
     }
 
@@ -483,6 +528,17 @@ function updateGame(){
       // Спидбар = прогресс внутри текущего уровня (0..100%)
       const progressInLevel = ((score % 5) / 5) * 100;
       document.getElementById('speedbar-fill').style.width = progressInLevel+'%';
+      // Разблокировка птиц: каждые 50 труб
+      const unl = getUnlocked();
+      if(unl < BIRDS.length && score > 0 && score % 50 === 0){
+        setUnlocked(unl+1);
+        unlockFlash = 180; // 3 секунды
+        unlockFlashBird = unl; // индекс новой птицы
+      }
+      // Бонус — случайно появляется раз в ~15 труб
+      if(bonuses.length < 2 && Math.random() < 0.07){
+        spawnBonus();
+      }
     }
     if(p.x < -p.w-10) pipes.splice(i,1);
   }
@@ -523,6 +579,9 @@ function updateIdle(){
 function triggerDeath(){
   if(STATE==='over') return;
   STATE = 'over';
+  // Тряска экрана!
+  shakeDur = 35;
+  shakeAmp = 14;
   hideEl('hud');
   document.getElementById('speedbar').style.display='none';
 
@@ -533,7 +592,7 @@ function triggerDeath(){
   });
 
   const rec = saveScore(playerName, score, BIRDS[birdIdx].id);
-  setTimeout(()=>showGameOver(rec), 800);
+  setTimeout(()=>showGameOver(rec), 900);
 }
 
 function showGameOver(rec){
@@ -547,7 +606,15 @@ function showGameOver(rec){
 // ══════════════════════════════════════════
 // РЕЙТИНГ
 // ══════════════════════════════════════════
-const LB_KEY = 'buria_orlov_v1';
+const LB_KEY   = 'buria_orlov_v1';
+const UNL_KEY  = 'buria_orlov_unlocked'; // сколько птиц разблокировано
+
+function getUnlocked(){
+  return Math.max(1, parseInt(localStorage.getItem(UNL_KEY)||'1'));
+}
+function setUnlocked(n){
+  localStorage.setItem(UNL_KEY, String(n));
+}
 function getLB(){ try{return JSON.parse(localStorage.getItem(LB_KEY)||'[]');}catch(e){return[];} }
 
 function saveScore(name, s, birdId){
@@ -810,6 +877,29 @@ function drawBird(){
     CX.globalAlpha=1;
   }
   CX.restore();
+  // Щит — синяя аура
+  if(activeShield>0){
+    CX.save();
+    CX.strokeStyle='#3498db'; CX.lineWidth=3;
+    CX.shadowBlur=20; CX.shadowColor='#3498db';
+    CX.globalAlpha=0.6+Math.sin(frame*.15)*.4;
+    const sc2=Math.min(W,H)/520;
+    CX.beginPath(); CX.ellipse(bird.x,bird.y,32*sc2,18*sc2,0,0,Math.PI*2); CX.stroke();
+    CX.shadowBlur=0; CX.globalAlpha=1;
+    CX.restore();
+  }
+  // Призрак — синеватая прозрачность (рисуется выше, тут ничего)
+  // Пушка — красная аура
+  if(activeGun>0){
+    CX.save();
+    CX.strokeStyle='#e74c3c'; CX.lineWidth=2;
+    CX.shadowBlur=16; CX.shadowColor='#e74c3c';
+    CX.globalAlpha=0.5+Math.sin(frame*.2)*.5;
+    const sc3=Math.min(W,H)/520;
+    CX.beginPath(); CX.ellipse(bird.x,bird.y,38*sc3,22*sc3,0,0,Math.PI*2); CX.stroke();
+    CX.shadowBlur=0; CX.globalAlpha=1;
+    CX.restore();
+  }
   trails.push({x:bird.x-10,y:bird.y,r:5,life:1});
   if(trails.length>20) trails.shift();
   trails.forEach(t=>t.life-=.06);
@@ -839,25 +929,34 @@ function drawParticles(){
 function buildSelector(){
   const grid=document.getElementById('sel-grid');
   grid.innerHTML='';
+  const unl = getUnlocked();
+  // если выбранная птица заблокирована — сбросить на 0
+  if(birdIdx >= unl) birdIdx = 0;
   BIRDS.forEach((b,i)=>{
+    const locked = i >= unl;
     const div=document.createElement('div');
-    div.className='sel-card'+(i===0?' active':'');
+    div.className='sel-card'+(i===0?' active':'')+(locked?' locked':'');
+    div.style.cursor = locked ? 'default' : 'pointer';
     const cv=document.createElement('canvas'); cv.width=54; cv.height=54;
     const nm=document.createElement('div'); nm.className='cname'; nm.textContent=b.name;
-    const tg=document.createElement('div'); tg.className='ctag';  tg.textContent=b.tag;
+    const tg=document.createElement('div'); tg.className='ctag';
+    tg.textContent = locked ? '🔒 '+((i+1)*50)+' труб' : b.tag;
     div.append(cv,nm,tg);
-    div.onclick=()=>{
-      document.querySelectorAll('.sel-card').forEach(c=>c.classList.remove('active'));
-      div.classList.add('active');
-      birdIdx=i;
-    };
+    if(!locked){
+      div.onclick=()=>{
+        document.querySelectorAll('.sel-card').forEach(c=>c.classList.remove('active'));
+        div.classList.add('active');
+        birdIdx=i;
+      };
+    }
     grid.appendChild(div);
-    drawPreview(b,cv);
+    drawPreview(b,cv,locked);
   });
 }
 
-function drawPreview(b,cv){
+function drawPreview(b,cv,locked){
   const c=cv.getContext('2d');
+  if(locked) c.filter='blur(3px) brightness(0.3)';
   c.save(); c.translate(27,27);
   c.fillStyle=b.wing; c.beginPath(); c.moveTo(-14,0); c.quadraticCurveTo(0,-20,14,0); c.fill();
   c.fillStyle=b.body; c.beginPath(); c.ellipse(0,0,20,8,0,0,Math.PI*2); c.fill();
@@ -875,8 +974,157 @@ function drawPreview(b,cv){
     c.shadowBlur=0;
   }
   c.restore();
+  c.filter='none';
 }
 
+
+
+// ══════════════════════════════════════════
+// БОНУСЫ
+// type: 'shield' | 'ghost' | 'gun' | 'slow'
+// ══════════════════════════════════════════
+const BONUS_DEFS = {
+  shield: { icon:'🛡', col:'#3498db', label:'ЩИТ',       dur:300 },
+  ghost:  { icon:'👻', col:'#9b59b6', label:'ПРИЗРАК',    dur:250 },
+  gun:    { icon:'💥', col:'#e74c3c', label:'ПУШКА',      dur:200 },
+  slow:   { icon:'⏳', col:'#2ecc71', label:'МЕДЛЕННО',   dur:280 },
+};
+const BONUS_TYPES = Object.keys(BONUS_DEFS);
+
+function spawnBonus(){
+  const type = BONUS_TYPES[Math.floor(Math.random()*BONUS_TYPES.length)];
+  bonuses.push({
+    x: W + 20,
+    y: H*0.15 + Math.random()*H*0.7,
+    type,
+    r: Math.min(W,H)*0.032,
+    pulse: Math.random()*Math.PI*2,
+    life: 1,
+  });
+}
+
+function updateBonuses(){
+  const spd = getDifficulty().spd;
+  const br  = Math.min(W,H)/520*9;
+
+  for(let i=bonuses.length-1; i>=0; i--){
+    const bo = bonuses[i];
+    bo.x -= spd * 0.7;
+    bo.pulse += 0.08;
+    // Подобрать
+    const dx = bird.x - bo.x, dy = bird.y - bo.y;
+    if(Math.sqrt(dx*dx+dy*dy) < bo.r + br){
+      collectBonus(bo.type);
+      bonuses.splice(i,1);
+      continue;
+    }
+    if(bo.x < -60) bonuses.splice(i,1);
+  }
+}
+
+function collectBonus(type){
+  const def = BONUS_DEFS[type];
+  if(type==='shield') activeShield = def.dur;
+  if(type==='ghost')  activeGhost  = def.dur;
+  if(type==='gun')    activeGun    = def.dur;
+  if(type==='slow'){
+    // замедляем трубы на время
+    activeShield = 0; // не мешаем другим
+    activeGhost  = Math.max(activeGhost, def.dur); // используем ghost как slow-контейнер
+    activeGhost  = 0;
+    // реализуем slow через отдельный флаг:
+    activeSlow = def.dur;
+  }
+  // Частицы подбора
+  const def2 = BONUS_DEFS[type];
+  for(let i=0;i<12;i++) particles.push({
+    x:bird.x, y:bird.y,
+    vx:(Math.random()-.5)*7, vy:(Math.random()-.5)*7,
+    r:3+Math.random()*5, col:def2.col, life:1
+  });
+}
+
+function drawBonuses(){
+  bonuses.forEach(bo=>{
+    const def = BONUS_DEFS[bo.type];
+    const pulse = 1 + Math.sin(bo.pulse)*0.12;
+    const r = bo.r * pulse;
+    // Свечение
+    CX.save();
+    CX.shadowBlur=20; CX.shadowColor=def.col;
+    // Круг фона
+    CX.globalAlpha=0.35;
+    CX.fillStyle=def.col;
+    CX.beginPath(); CX.arc(bo.x,bo.y,r,0,Math.PI*2); CX.fill();
+    CX.globalAlpha=0.7;
+    CX.strokeStyle=def.col; CX.lineWidth=2;
+    CX.beginPath(); CX.arc(bo.x,bo.y,r,0,Math.PI*2); CX.stroke();
+    CX.shadowBlur=0;
+    // Иконка
+    CX.globalAlpha=1;
+    CX.font='bold '+Math.round(r*1.1)+'px Arial';
+    CX.textAlign='center'; CX.textBaseline='middle';
+    CX.fillText(def.icon, bo.x, bo.y);
+    CX.textAlign='left'; CX.textBaseline='alphabetic';
+    CX.restore();
+  });
+}
+
+function drawActiveBonuses(){
+  // Полоски активных бонусов под HUD
+  const fs=Math.min(W,H)*.024;
+  let yi=0;
+  const drawBar=(type,remain,total)=>{
+    if(remain<=0) return;
+    const def=BONUS_DEFS[type];
+    const x=14, y=fs*4.5+yi*(fs*1.8), bw=Math.min(W*.25,160), bh=fs*.9;
+    CX.save();
+    // Фон
+    CX.fillStyle='rgba(0,0,0,.5)';
+    CX.fillRect(x,y,bw,bh);
+    // Прогресс
+    CX.fillStyle=def.col;
+    CX.globalAlpha=0.8;
+    CX.fillRect(x,y,bw*(remain/total),bh);
+    CX.globalAlpha=1;
+    // Иконка + текст
+    CX.font='700 '+fs*.85+'px Arial';
+    CX.textBaseline='middle'; CX.fillStyle='#fff';
+    CX.shadowBlur=4; CX.shadowColor='rgba(0,0,0,.8)';
+    CX.fillText(def.icon+' '+def.label, x+4, y+bh/2);
+    CX.shadowBlur=0;
+    CX.restore();
+    yi++;
+  };
+  drawBar('shield', activeShield, BONUS_DEFS.shield.dur);
+  drawBar('ghost',  activeGhost,  BONUS_DEFS.ghost.dur);
+  drawBar('gun',    activeGun,    BONUS_DEFS.gun.dur);
+  drawBar('slow',   activeSlow,   BONUS_DEFS.slow.dur);
+}
+
+// Разблокировка птицы — баннер снизу
+function drawUnlockBanner(){
+  if(unlockFlash<=0) return;
+  unlockFlash--;
+  const alpha=Math.min(1,unlockFlash/40)*Math.min(1,(unlockFlash>140?1:(unlockFlash/40)));
+  const b=BIRDS[unlockFlashBird];
+  const fs=Math.min(W,H)*.038;
+  const text='🎉 РАЗБЛОКИРОВАНО: '+b.name+'!';
+  CX.save();
+  CX.globalAlpha=alpha;
+  CX.fillStyle='rgba(0,0,0,.7)';
+  CX.fillRect(0, H-fs*2.8, W, fs*2.8);
+  CX.strokeStyle=b.aura||'#f1c40f'; CX.lineWidth=2;
+  CX.strokeRect(0, H-fs*2.8, W, fs*2.8);
+  CX.font='700 '+fs+'px Arial';
+  CX.textAlign='center'; CX.textBaseline='middle';
+  CX.fillStyle=b.aura||'#f1c40f';
+  CX.shadowBlur=16; CX.shadowColor=b.aura||'#f1c40f';
+  CX.fillText(text, W/2, H-fs*1.3);
+  CX.shadowBlur=0;
+  CX.textAlign='left'; CX.textBaseline='alphabetic';
+  CX.restore();
+}
 
 // ══════════════════════════════════════════
 // УРОВЕНЬ И LEVEL-UP НА CANVAS
@@ -915,6 +1163,15 @@ function loop(){
   cycleDayNight=(cycleDayNight+.00035)%1;
   CX.clearRect(0,0,W,H);
 
+  // Тряска экрана
+  CX.save();
+  if(shakeDur>0){
+    const sx=(Math.random()-.5)*shakeAmp*2;
+    const sy=(Math.random()-.5)*shakeAmp*2;
+    CX.translate(sx,sy);
+    shakeAmp=Math.max(0,shakeAmp*.88);
+  }
+
   // Фон рисуется всегда (красиво за меню тоже)
   drawSky();
   drawStars();
@@ -930,12 +1187,16 @@ function loop(){
     if(STATE==='countdown'||STATE==='ready') updateIdle();
     if(STATE==='playing') updateGame();
     drawBird();
+    drawBonuses();
     drawParticles();
     drawLevelHud();
+    drawActiveBonuses();
+    drawUnlockBanner();
     // Отсчёт/tap — рисуем НА canvas поверх всего
     drawOverlayCanvas();
   }
 
+  CX.restore(); // конец тряски
   requestAnimationFrame(loop);
 }
 
