@@ -174,14 +174,63 @@ canvas{display:block;position:fixed;top:0;left:0}
 // ПТИЦЫ
 // ══════════════════════════════════════════
 const BIRDS=[
-  {id:'eagle',  name:'ОРЁЛ',      tag:'КЛАССИКА', emoji:'🦅',body:'#5d4037',wing:'#3e2723',head:'#fff8e1',beak:'#f59e0b',eye:'#111',  aura:null,       trail:'rgba(139,90,43,.4)'},
-  {id:'phoenix',name:'ФЕНИКС',    tag:'ОГОНЬ',    emoji:'🔥',body:'#e74c3c',wing:'#922b21',head:'#f39c12',beak:'#e67e22',eye:'#fff',  aura:'#ff6b35',  trail:'rgba(231,76,60,.5)'},
-  {id:'raven',  name:'ВОРОН',     tag:'ТЕНЬ',     emoji:'🐦',body:'#1a1a2e',wing:'#0d0d1a',head:'#2c2c54',beak:'#95a5a6',eye:'#6c5ce7',aura:'#6c5ce7', trail:'rgba(108,92,231,.4)'},
-  {id:'falcon', name:'СОКОЛ',     tag:'СКОРОСТЬ', emoji:'🦅',body:'#2c3e50',wing:'#1a252f',head:'#ecf0f1',beak:'#e67e22',eye:'#e74c3c',aura:'#3498db', trail:'rgba(52,73,94,.4)'},
-  {id:'parrot', name:'ПОПУГАЙ',   tag:'УДАЧА',    emoji:'🦜',body:'#27ae60',wing:'#1e8449',head:'#f1c40f',beak:'#e74c3c',eye:'#fff',  aura:'#f1c40f',  trail:'rgba(39,174,96,.4)'},
-  {id:'storm',  name:'БУРЕВЕСТ.', tag:'ЛЕГЕНДА',  emoji:'⚡',body:'#7f8c8d',wing:'#636e72',head:'#dfe6e9',beak:'#fdcb6e',eye:'#6c5ce7',aura:'#fdcb6e', trail:'rgba(127,140,141,.5)'},
-  {id:'ice',    name:'ЛЕДЯНОЙ',   tag:'АРКТИКА',  emoji:'❄️',body:'#74b9ff',wing:'#0984e3',head:'#dfe6e9',beak:'#b2bec3',eye:'#111',  aura:'#74b9ff',  trail:'rgba(116,185,255,.5)'},
-  {id:'golden', name:'ЗОЛОТОЙ',   tag:'РЕДКИЙ',   emoji:'✨',body:'#f1c40f',wing:'#e67e22',head:'#fffde7',beak:'#e67e22',eye:'#2d3436',aura:'#f1c40f', trail:'rgba(241,196,15,.6)'},
+  // skill: описание навыка | jumpM=прыжок | gravM=гравитация | hitM=хитбокс
+  //        gunB/shieldB/ghostB/slowB = бонус-кадры каждые 10 труб
+  {id:'eagle',  name:'ОРЁЛ',      emoji:'🦅',
+   skill:'Сбалансированный — без бонусов, честная игра',
+   skillIcon:'⚖️',
+   jumpM:1.0, gravM:1.0, hitM:1.0,
+   gunB:0,   shieldB:0,  ghostB:0,  slowB:0,
+   body:'#5d4037',wing:'#3e2723',head:'#fff8e1',beak:'#f59e0b',eye:'#111',  aura:null,      trail:'rgba(139,90,43,.4)'},
+
+  {id:'phoenix',name:'ФЕНИКС',    emoji:'🔥',
+   skill:'Пушка: каждые 10 труб +8 сек огня',
+   skillIcon:'💥',
+   jumpM:1.0, gravM:1.05, hitM:1.0,
+   gunB:480, shieldB:0,  ghostB:0,  slowB:0,
+   body:'#e74c3c',wing:'#922b21',head:'#f39c12',beak:'#e67e22',eye:'#fff',  aura:'#ff6b35', trail:'rgba(231,76,60,.5)'},
+
+  {id:'raven',  name:'ВОРОН',     emoji:'🐦',
+   skill:'Призрак: каждые 10 труб +8 сек невидимости',
+   skillIcon:'👻',
+   jumpM:1.1, gravM:0.95, hitM:0.85,
+   gunB:0,   shieldB:0,  ghostB:480,slowB:0,
+   body:'#1a1a2e',wing:'#0d0d1a',head:'#2c2c54',beak:'#95a5a6',eye:'#6c5ce7',aura:'#6c5ce7',trail:'rgba(108,92,231,.4)'},
+
+  {id:'falcon', name:'СОКОЛ',     emoji:'🦅',
+   skill:'Манёвренность x1.35 — прыжок выше и точнее',
+   skillIcon:'🎯',
+   jumpM:1.35,gravM:0.9,  hitM:0.9,
+   gunB:0,   shieldB:0,  ghostB:0,  slowB:0,
+   body:'#2c3e50',wing:'#1a252f',head:'#ecf0f1',beak:'#e67e22',eye:'#e74c3c',aura:'#3498db',trail:'rgba(52,73,94,.4)'},
+
+  {id:'parrot', name:'ПОПУГАЙ',   emoji:'🦜',
+   skill:'Замедление: каждые 10 труб +8 сек слоу',
+   skillIcon:'⏳',
+   jumpM:0.95,gravM:1.0,  hitM:1.0,
+   gunB:0,   shieldB:0,  ghostB:0,  slowB:480,
+   body:'#27ae60',wing:'#1e8449',head:'#f1c40f',beak:'#e74c3c',eye:'#fff',  aura:'#f1c40f', trail:'rgba(39,174,96,.4)'},
+
+  {id:'storm',  name:'БУРЕВЕСТНИК', emoji:'⚡',
+   skill:'Щит: каждые 10 труб +8 сек защиты',
+   skillIcon:'🛡',
+   jumpM:1.0, gravM:0.92, hitM:0.95,
+   gunB:0,   shieldB:480,ghostB:0,  slowB:0,
+   body:'#7f8c8d',wing:'#636e72',head:'#dfe6e9',beak:'#fdcb6e',eye:'#6c5ce7',aura:'#fdcb6e',trail:'rgba(127,140,141,.5)'},
+
+  {id:'ice',    name:'ЛЕДЯНОЙ',   emoji:'❄️',
+   skill:'Малый хитбокс x0.7 + замедление каждые 10 труб',
+   skillIcon:'❄️',
+   jumpM:1.05,gravM:0.88, hitM:0.7,
+   gunB:0,   shieldB:0,  ghostB:0,  slowB:480,
+   body:'#74b9ff',wing:'#0984e3',head:'#dfe6e9',beak:'#b2bec3',eye:'#111',  aura:'#74b9ff', trail:'rgba(116,185,255,.5)'},
+
+  {id:'golden', name:'ЗОЛОТОЙ',   emoji:'✨',
+   skill:'Легенда: все бонусы по 4 сек каждые 10 труб',
+   skillIcon:'👑',
+   jumpM:1.1, gravM:0.88, hitM:0.8,
+   gunB:240, shieldB:240,ghostB:240,slowB:240,
+   body:'#f1c40f',wing:'#e67e22',head:'#fffde7',beak:'#e67e22',eye:'#2d3436',aura:'#f1c40f',trail:'rgba(241,196,15,.6)'},
 ];
 
 // ══════════════════════════════════════════
@@ -235,14 +284,15 @@ function checkRotate(){
 // ══════════════════════════════════════════
 let GRAV, JUMP, SPEED, GAP, PIPE_INT;
 function recalcPhysics(){
-  // sc масштабирует только GAP и PIPE_INT под размер экрана,
-  // но НЕ скорость — она одинакова на всех устройствах
-  const sc = Math.min(W, H*16/9) / 800;
-  GRAV     = 0.15;          // одинаково везде, медленнее
-  JUMP     = -4.2;          // одинаково везде
-  SPEED    = 2.2;           // одинаково везде, медленнее
-  GAP      = Math.max(160, 240*(H/450));   // зазор под высоту экрана
-  PIPE_INT = Math.round(360/sc);           // частота под размер экрана
+  // Всё масштабируется от ВЫСОТЫ экрана — одинаково на телефоне и ПК
+  const ref = Math.min(H, W*9/16); // опорный размер = "высота 16:9 окна"
+  const sc  = ref / 450;           // нормировка: sc=1 при высоте 450px
+
+  GRAV     = 0.15 * sc;   // гравитация пропорциональна экрану
+  JUMP     = -4.2 * sc;   // прыжок пропорционален экрану
+  SPEED    = 2.2  * sc;   // скорость пропорциональна → одинаковое ощущение везде
+  GAP      = Math.max(130*sc, 200*sc); // зазор пропорционален
+  PIPE_INT = 360;          // интервал ФИКСИРОВАННЫЙ в кадрах — одинаково везде
 }
 
 // ══════════════════════════════════════════
@@ -281,9 +331,16 @@ let unlockFlash     = 0;
 let unlockFlashBird = 0;
 
 // Тряска экрана
-let shakeDur   = 0;  // кадров осталось
-let shakeAmp   = 0;  // амплитуда
-let activeSlow = 0;  // замедление
+let shakeDur   = 0;
+let shakeAmp   = 0;
+let activeSlow = 0;
+
+// Монеты
+let coins = [];        // монеты на экране
+let sessionCoins = 0;  // собрано за игру
+const TOTAL_COINS_KEY = 'buria_coins_total';
+function getTotalCoins(){ return parseInt(localStorage.getItem(TOTAL_COINS_KEY)||'0'); }
+function addCoins(n){ localStorage.setItem(TOTAL_COINS_KEY, getTotalCoins()+n); }
 
 // ══════════════════════════════════════════
 // ИНИЦИАЛИЗАЦИЯ МИРА
@@ -293,7 +350,7 @@ function initWorld(){
   bird = {x:W*0.22, y:H/2, v:0, wing:0};
   pipes=[];trails=[];particles=[];
   score=0; frame=0; combo=0; comboTimer=0; level=1; lastLevelScore=0;
-  lightFlash=0; tapBlink=0; bonuses=[]; activeShield=0; activeGhost=0; activeGun=0; activeSlow=0; shakeDur=0; shakeAmp=0; unlockFlash=0;
+  lightFlash=0; tapBlink=0; bonuses=[]; activeShield=0; activeGhost=0; activeGun=0; activeSlow=0; shakeDur=0; shakeAmp=0; unlockFlash=0; coins=[]; sessionCoins=0; sessionBonusCount=0;
 
   document.getElementById('hud-score').textContent = '0';
   document.getElementById('hud-combo').style.opacity = '0';
@@ -400,7 +457,8 @@ function onTap(e){
 }
 
 function doFlap(){
-  bird.v = JUMP;
+  const bdef = BIRDS[birdIdx];
+  bird.v = JUMP * bdef.jumpM;
   const b = BIRDS[birdIdx];
   for(let i=0;i<5;i++) particles.push({
     x:bird.x-12, y:bird.y+4,
@@ -430,24 +488,24 @@ function clickMenu(){
 }
 
 // ══════════════════════════════════════════
-// ПРОГРЕССИЯ СЛОЖНОСТИ
-// Каждые 10 очков — новый уровень (макс 10)
+// ПРОГРЕССИЯ СЛОЖНОСТИ — плавная по score
+// Каждые 100 труб — лёгкое облегчение
 // ══════════════════════════════════════════
 function getDifficulty(){
-  // level 1..10
-  const lvl = Math.min(20, 1 + Math.floor(score / 5));
-  const t = (lvl-1)/19; // 0..1
+  // Плавный рост от 0 до 1 по мере накопления труб (насыщение к ~200)
+  const base = Math.min(1, score / 200);
+
+  // Каждые 100 труб — 10-трубное облегчение
+  const relief = (score > 0 && score % 100 < 10) ? 0.18 : 0;
+  const t = Math.max(0, base - relief);
+
+  const slowMult = activeSlow > 0 ? 0.45 : 1;
 
   return {
-    lvl,
-    // Скорость: от базовой до +90%
-    spd:  SPEED * (1 + t * 0.9) * (activeSlow>0 ? 0.45 : 1),
-    // Зазор между трубами: от GAP до GAP*0.52 (почти вдвое уже)
-    gap:  GAP * (1 - t * 0.48),
-    // Интервал между трубами: чаще появляются
-    interval: Math.round(PIPE_INT * (1 - t * 0.35)),
-    // Ширина труб: чуть толще
-    pw: Math.max(60, Math.min(95, W*.09) * (1 + t * 0.25)),
+    spd:      SPEED * (1 + t * 1.1) * slowMult,
+    gap:      GAP   * (1 - t * 0.52),
+    interval: Math.round(PIPE_INT * Math.max(0.5, 1 - t * 0.45)),
+    pw:       Math.max(55, W * 0.08 * (1 + t * 0.3)),
   };
 }
 
@@ -455,19 +513,12 @@ function getDifficulty(){
 // ИГРОВАЯ ЛОГИКА
 // ══════════════════════════════════════════
 function updateGame(){
-  bird.v += GRAV;
+  const bdef = BIRDS[birdIdx];
+  bird.v += GRAV * bdef.gravM;
   bird.y += bird.v;
   bird.wing += .15;
 
   const diff = getDifficulty();
-
-  // Повышение уровня — показываем вспышку
-  if(diff.lvl > level){
-    level = diff.lvl;
-    lastLevelScore = score;
-    // Световая вспышка
-    lightFlash = 6;
-  }
 
   // Трубы — первая через interval кадров после старта
   if(frame > 0 && frame % diff.interval === 0){
@@ -486,8 +537,9 @@ function updateGame(){
   if(activeSlow>0)   activeSlow--;
   if(shakeDur>0)     shakeDur--;
   updateBonuses();
+  updateCoins();
 
-  const br = Math.min(W,H)/520*9;
+  const br = Math.min(W,H)/520*9 * BIRDS[birdIdx].hitM;
 
   for(let i=pipes.length-1; i>=0; i--){
     const p = pipes[i];
@@ -526,18 +578,32 @@ function updateGame(){
       updateComboUI();
       spawnPts();
       // Спидбар = прогресс внутри текущего уровня (0..100%)
-      const progressInLevel = ((score % 5) / 5) * 100;
-      document.getElementById('speedbar-fill').style.width = progressInLevel+'%';
+      const progressTo100 = (score % 100) / 100 * 100;
+      document.getElementById('speedbar-fill').style.width = progressTo100+'%';
       // Разблокировка птиц: каждые 50 труб
       const unl = getUnlocked();
       if(unl < BIRDS.length && score > 0 && score % 50 === 0){
         setUnlocked(unl+1);
-        unlockFlash = 180; // 3 секунды
-        unlockFlashBird = unl; // индекс новой птицы
+        unlockFlash = 180;
+        unlockFlashBird = unl; // unl = индекс только что открытой птицы (0-based)
+      }
+      // Бонус навыка птицы: каждые 10 труб
+      if(score > 0 && score % 10 === 0){
+        const sk = BIRDS[birdIdx];
+        if(sk.gunB)    activeGun    = Math.min(600, activeGun    + sk.gunB);
+        if(sk.shieldB) activeShield = Math.min(600, activeShield + sk.shieldB);
+        if(sk.ghostB)  activeGhost  = Math.min(600, activeGhost  + sk.ghostB);
+        if(sk.slowB)   activeSlow   = Math.min(600, activeSlow   + sk.slowB);
+        // Вспышка при получении навыка
+        if(sk.gunB||sk.shieldB||sk.ghostB||sk.slowB) lightFlash = 4;
       }
       // Бонус — случайно появляется раз в ~15 труб
-      if(bonuses.length < 2 && Math.random() < 0.07){
+      if(bonuses.length < 3 && Math.random() < 0.14){
         spawnBonus();
+      }
+      // Монета — ~30% шанс при каждой трубе
+      if(Math.random() < 0.30){
+        spawnCoin(p.x - diff.pw, H*0.1 + Math.random()*H*0.8);
       }
     }
     if(p.x < -p.w-10) pipes.splice(i,1);
@@ -596,7 +662,8 @@ function triggerDeath(){
 }
 
 function showGameOver(rec){
-  document.getElementById('go-score').textContent = score+' ОЧКОВ';
+  checkDailyQuests();
+  document.getElementById('go-score').textContent = score+' ОЧКОВ  💰'+sessionCoins;
   document.getElementById('go-best').textContent =
     rec.isNew ? '🎉 НОВЫЙ РЕКОРД!' : ('Твой рекорд: '+rec.best);
   renderLB('lb-rows');
@@ -606,6 +673,64 @@ function showGameOver(rec){
 // ══════════════════════════════════════════
 // РЕЙТИНГ
 // ══════════════════════════════════════════
+
+// ══════════════════════════════════════════
+// ЕЖЕДНЕВНЫЕ ЗАДАНИЯ
+// ══════════════════════════════════════════
+const DAILY_KEY = 'buria_daily';
+const QUEST_DEFS = [
+  { id:'pipes30',  text:'Пройди 30 труб за игру',    check:(s,c,b)=>s>=30,  reward:50  },
+  { id:'pipes60',  text:'Пройди 60 труб за игру',    check:(s,c,b)=>s>=60,  reward:100 },
+  { id:'coins10',  text:'Собери 10 монет за игру',   check:(s,c,b)=>c>=10,  reward:30  },
+  { id:'coins25',  text:'Собери 25 монет за игру',   check:(s,c,b)=>c>=25,  reward:75  },
+  { id:'bonus3',   text:'Подбери 3 бонуса за игру',  check:(s,c,b)=>b>=3,   reward:40  },
+  { id:'pipes100', text:'Пройди 100 труб за игру',   check:(s,c,b)=>s>=100, reward:200 },
+];
+
+let sessionBonusCount = 0; // бонусов подобрано за игру
+
+function getDailyState(){
+  try{ return JSON.parse(localStorage.getItem(DAILY_KEY)||'{}'); }catch(e){ return {}; }
+}
+function saveDailyState(s){ localStorage.setItem(DAILY_KEY, JSON.stringify(s)); }
+
+function checkDailyQuests(){
+  const today = new Date().toDateString();
+  let st = getDailyState();
+  if(st.date !== today){ st = {date:today, done:{}}; }
+  let earned = 0;
+  QUEST_DEFS.forEach(q=>{
+    if(!st.done[q.id] && q.check(score, sessionCoins, sessionBonusCount)){
+      st.done[q.id] = true;
+      earned += q.reward;
+    }
+  });
+  if(earned>0){ addCoins(earned); saveDailyState(st); }
+  saveDailyState(st);
+  return st;
+}
+
+function drawDailyHud(){
+  // Показываем активные задания в левом нижнем углу (до бонус-баров)
+  if(STATE!=='playing') return;
+  const today = new Date().toDateString();
+  let st = getDailyState();
+  if(st.date !== today) return;
+  const fs = Math.min(W,H)*0.022;
+  let pending = QUEST_DEFS.filter(q=>!st.done||!st.done[q.id]).slice(0,2);
+  pending.forEach((q,i)=>{
+    const y = H - fs*1.8*(pending.length-i) - fs*0.3;
+    CX.save();
+    CX.fillStyle='rgba(0,0,0,.45)';
+    CX.fillRect(8, y, Math.min(W*0.55,280), fs*1.4);
+    CX.fillStyle='rgba(241,196,15,.85)';
+    CX.font='600 '+fs+'px Arial';
+    CX.textBaseline='middle';
+    CX.fillText('📋 '+q.text, 12, y+fs*0.7);
+    CX.restore();
+  });
+}
+
 const LB_KEY   = 'buria_orlov_v1';
 const UNL_KEY  = 'buria_orlov_unlocked'; // сколько птиц разблокировано
 
@@ -930,18 +1055,30 @@ function buildSelector(){
   const grid=document.getElementById('sel-grid');
   grid.innerHTML='';
   const unl = getUnlocked();
-  // если выбранная птица заблокирована — сбросить на 0
   if(birdIdx >= unl) birdIdx = 0;
   BIRDS.forEach((b,i)=>{
     const locked = i >= unl;
     const div=document.createElement('div');
-    div.className='sel-card'+(i===0?' active':'')+(locked?' locked':'');
+    div.className='sel-card'+(i===birdIdx?' active':'')+(locked?' locked':'');
     div.style.cursor = locked ? 'default' : 'pointer';
+    // Превью канвас
     const cv=document.createElement('canvas'); cv.width=54; cv.height=54;
+    // Имя
     const nm=document.createElement('div'); nm.className='cname'; nm.textContent=b.name;
-    const tg=document.createElement('div'); tg.className='ctag';
-    tg.textContent = locked ? '🔒 '+((i+1)*50)+' труб' : b.tag;
-    div.append(cv,nm,tg);
+    // Навык или замок
+    const sk=document.createElement('div'); sk.className='ctag';
+    if(locked){
+      sk.textContent='🔒 через '+(i*50)+' труб';
+      sk.style.color='rgba(255,100,100,.6)';
+    } else {
+      sk.textContent=b.skillIcon+' '+b.skill;
+      sk.style.fontSize='8px';
+      sk.style.color='rgba(255,255,255,.45)';
+      sk.style.lineHeight='1.2';
+      sk.style.marginTop='3px';
+      sk.style.whiteSpace='normal';
+    }
+    div.append(cv,nm,sk);
     if(!locked){
       div.onclick=()=>{
         document.querySelectorAll('.sel-card').forEach(c=>c.classList.remove('active'));
@@ -956,8 +1093,10 @@ function buildSelector(){
 
 function drawPreview(b,cv,locked){
   const c=cv.getContext('2d');
+  c.clearRect(0,0,54,54);
+  c.save();
   if(locked) c.filter='blur(3px) brightness(0.3)';
-  c.save(); c.translate(27,27);
+  c.translate(27,27);
   c.fillStyle=b.wing; c.beginPath(); c.moveTo(-14,0); c.quadraticCurveTo(0,-20,14,0); c.fill();
   c.fillStyle=b.body; c.beginPath(); c.ellipse(0,0,20,8,0,0,Math.PI*2); c.fill();
   c.fillStyle=b.head; c.beginPath(); c.arc(16,-4,9,0,Math.PI*2); c.fill();
@@ -973,8 +1112,7 @@ function drawPreview(b,cv,locked){
     c.beginPath(); c.ellipse(0,0,21,9,0,0,Math.PI*2); c.stroke();
     c.shadowBlur=0;
   }
-  c.restore();
-  c.filter='none';
+  c.restore(); // filter сбрасывается вместе с save/restore
 }
 
 
@@ -984,10 +1122,10 @@ function drawPreview(b,cv,locked){
 // type: 'shield' | 'ghost' | 'gun' | 'slow'
 // ══════════════════════════════════════════
 const BONUS_DEFS = {
-  shield: { icon:'🛡', col:'#3498db', label:'ЩИТ',       dur:300 },
-  ghost:  { icon:'👻', col:'#9b59b6', label:'ПРИЗРАК',    dur:250 },
-  gun:    { icon:'💥', col:'#e74c3c', label:'ПУШКА',      dur:200 },
-  slow:   { icon:'⏳', col:'#2ecc71', label:'МЕДЛЕННО',   dur:280 },
+  shield: { icon:'🛡', col:'#3498db', label:'ЩИТ',       dur:600 },
+  ghost:  { icon:'👻', col:'#9b59b6', label:'ПРИЗРАК',    dur:600 },
+  gun:    { icon:'💥', col:'#e74c3c', label:'ПУШКА',      dur:600 },
+  slow:   { icon:'⏳', col:'#2ecc71', label:'МЕДЛЕННО',   dur:600 },
 };
 const BONUS_TYPES = Object.keys(BONUS_DEFS);
 
@@ -997,7 +1135,7 @@ function spawnBonus(){
     x: W + 20,
     y: H*0.15 + Math.random()*H*0.7,
     type,
-    r: Math.min(W,H)*0.032,
+    r: Math.min(W,H)*0.064,
     pulse: Math.random()*Math.PI*2,
     life: 1,
   });
@@ -1024,17 +1162,12 @@ function updateBonuses(){
 
 function collectBonus(type){
   const def = BONUS_DEFS[type];
-  if(type==='shield') activeShield = def.dur;
-  if(type==='ghost')  activeGhost  = def.dur;
-  if(type==='gun')    activeGun    = def.dur;
-  if(type==='slow'){
-    // замедляем трубы на время
-    activeShield = 0; // не мешаем другим
-    activeGhost  = Math.max(activeGhost, def.dur); // используем ghost как slow-контейнер
-    activeGhost  = 0;
-    // реализуем slow через отдельный флаг:
-    activeSlow = def.dur;
-  }
+  // Суммируем с текущим остатком (не обнуляем другие бонусы!)
+  if(type==='shield') activeShield = Math.min(1200, activeShield + def.dur);
+  if(type==='ghost')  activeGhost  = Math.min(1200, activeGhost  + def.dur);
+  if(type==='gun')    activeGun    = Math.min(1200, activeGun    + def.dur);
+  if(type==='slow')   activeSlow   = Math.min(1200, activeSlow   + def.dur);
+  sessionBonusCount++;
   // Частицы подбора
   const def2 = BONUS_DEFS[type];
   for(let i=0;i<12;i++) particles.push({
@@ -1042,6 +1175,68 @@ function collectBonus(type){
     vx:(Math.random()-.5)*7, vy:(Math.random()-.5)*7,
     r:3+Math.random()*5, col:def2.col, life:1
   });
+}
+
+function spawnCoin(x, y){
+  coins.push({ x: x||W+10, y, pulse:Math.random()*Math.PI*2, r:Math.min(W,H)*0.018 });
+}
+
+function updateCoins(){
+  const spd = getDifficulty().spd;
+  const br  = Math.min(W,H)/520*9 * BIRDS[birdIdx].hitM;
+  for(let i=coins.length-1;i>=0;i--){
+    const co=coins[i];
+    co.x -= spd;
+    co.pulse += 0.1;
+    const dx=bird.x-co.x, dy=bird.y-co.y;
+    if(Math.sqrt(dx*dx+dy*dy) < co.r + br){
+      sessionCoins++;
+      addCoins(1);
+      // Частицы
+      for(let j=0;j<6;j++) particles.push({
+        x:co.x,y:co.y,
+        vx:(Math.random()-.5)*5,vy:-Math.random()*4-1,
+        r:2+Math.random()*3, col:'#f1c40f', life:1
+      });
+      coins.splice(i,1); continue;
+    }
+    if(co.x < -40) coins.splice(i,1);
+  }
+}
+
+function drawCoins(){
+  coins.forEach(co=>{
+    const r = co.r * (1 + Math.sin(co.pulse)*0.15);
+    CX.save();
+    CX.shadowBlur=14; CX.shadowColor='#f1c40f';
+    CX.fillStyle='#f1c40f'; CX.globalAlpha=0.9;
+    CX.beginPath(); CX.arc(co.x,co.y,r,0,Math.PI*2); CX.fill();
+    CX.fillStyle='#e67e22'; CX.globalAlpha=0.7;
+    CX.beginPath(); CX.arc(co.x,co.y,r*0.6,0,Math.PI*2); CX.fill();
+    CX.shadowBlur=0; CX.globalAlpha=1;
+    // Знак монеты
+    CX.fillStyle='#fff';
+    CX.font='bold '+Math.round(r*1.1)+'px Arial';
+    CX.textAlign='center'; CX.textBaseline='middle';
+    CX.fillText('$', co.x, co.y);
+    CX.textAlign='left'; CX.textBaseline='alphabetic';
+    CX.restore();
+  });
+}
+
+function drawCoinHud(){
+  if(STATE!=='playing'&&STATE!=='over') return;
+  const fs=Math.min(W,H)*0.028;
+  const total=getTotalCoins();
+  CX.save();
+  CX.textAlign='right'; CX.textBaseline='top';
+  CX.font='700 '+fs+'px Arial';
+  CX.fillStyle='rgba(0,0,0,.4)';
+  CX.fillRect(W-fs*6.5, fs*2.2, fs*6, fs*1.5);
+  CX.fillStyle='#f1c40f'; CX.shadowBlur=6; CX.shadowColor='#f1c40f';
+  CX.fillText('💰 '+sessionCoins+' ('+total+')', W-fs*0.4, fs*2.4);
+  CX.shadowBlur=0;
+  CX.restore();
 }
 
 function drawBonuses(){
@@ -1126,35 +1321,7 @@ function drawUnlockBanner(){
   CX.restore();
 }
 
-// ══════════════════════════════════════════
-// УРОВЕНЬ И LEVEL-UP НА CANVAS
-// ══════════════════════════════════════════
-function drawLevelHud(){
-  if(STATE!=='playing' && STATE!=='over') return;
-
-  const diff = getDifficulty();
-  const fs = Math.min(W,H)*.028;
-
-  // Уровень — правый верхний угол (под комбо)
-  CX.save();
-  CX.textAlign='right';
-  CX.textBaseline='top';
-  CX.font='700 '+fs+'px Arial,sans-serif';
-
-  // Цвет уровня: зелёный→жёлтый→красный
-  const t=(level-1)/9;
-  const r=Math.round(80+t*175), g=Math.round(220-t*120), b=80;
-  const col='rgb('+r+','+g+','+b+')';
-
-  CX.fillStyle='rgba(0,0,0,.4)';
-  CX.fillRect(W-fs*5.5, fs*.5, fs*5, fs*1.6);
-
-  CX.fillStyle=col;
-  CX.shadowBlur=8; CX.shadowColor=col;
-  CX.fillText('УР. '+level+' / 20', W-fs*.6, fs*.7);
-  CX.shadowBlur=0;
-  CX.restore();
-}
+// drawLevelHud удалён — уровни убраны
 
 // ══════════════════════════════════════════
 // ГЛАВНЫЙ ЦИКЛ
@@ -1187,10 +1354,12 @@ function loop(){
     if(STATE==='countdown'||STATE==='ready') updateIdle();
     if(STATE==='playing') updateGame();
     drawBird();
+    drawCoins();
     drawBonuses();
     drawParticles();
-    drawLevelHud();
     drawActiveBonuses();
+    drawCoinHud();
+    drawDailyHud();
     drawUnlockBanner();
     // Отсчёт/tap — рисуем НА canvas поверх всего
     drawOverlayCanvas();
