@@ -92,6 +92,52 @@ canvas{display:block;position:fixed;top:0;left:0}
 .btn-back:hover{background:rgba(255,255,255,.15)}
 .btn-back:active{transform:scale(.96)}
 
+/* ── ЭКРАН ПРОКАЧКИ ── */
+#upgrade-screen{position:fixed;inset:0;z-index:600;display:none;
+  background:rgba(3,6,18,.97);flex-direction:column;align-items:center;
+  justify-content:flex-start;padding:16px;overflow-y:auto}
+.upg-header{display:flex;align-items:center;gap:12px;width:100%;max-width:600px;
+  margin-bottom:14px}
+.upg-back{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+  border-radius:10px;padding:8px 16px;color:#fff;font-size:14px;font-weight:700;
+  cursor:pointer;transition:.2s;white-space:nowrap}
+.upg-back:hover{background:rgba(255,255,255,.2)}
+.upg-title{font-size:clamp(18px,4vw,28px);font-weight:900;letter-spacing:2px;
+  background:linear-gradient(135deg,#f1c40f,#e67e22);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;flex:1;text-align:center}
+.upg-coins{font-size:16px;font-weight:900;color:#f1c40f;white-space:nowrap}
+.upg-bird-preview{display:flex;align-items:center;gap:16px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
+  border-radius:16px;padding:14px 20px;width:100%;max-width:600px;margin-bottom:14px}
+.upg-bird-canvas{flex-shrink:0}
+.upg-bird-info{flex:1}
+.upg-bird-name{font-size:20px;font-weight:900;color:#fff;margin-bottom:4px}
+.upg-bird-skill{font-size:12px;color:rgba(255,255,255,.5);line-height:1.4}
+.upg-skills{display:flex;flex-direction:column;gap:10px;width:100%;max-width:600px}
+.upg-skill{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
+  border-radius:14px;padding:12px 16px;cursor:pointer;transition:all .2s;position:relative;
+  overflow:hidden}
+.upg-skill:hover{border-color:rgba(241,196,15,.5);transform:translateX(3px)}
+.upg-skill.maxed{border-color:rgba(46,204,113,.4);cursor:default}
+.upg-skill-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.upg-skill-icon{font-size:22px}
+.upg-skill-name{font-size:14px;font-weight:800;color:#fff;flex:1}
+.upg-skill-cost{font-size:13px;font-weight:700;color:#f1c40f}
+.upg-skill-cost.maxed{color:#2ecc71}
+.upg-skill-desc{font-size:11px;color:rgba(255,255,255,.45);margin-bottom:8px;line-height:1.4}
+.upg-skill-bar{height:8px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden}
+.upg-skill-bar-fill{height:100%;border-radius:4px;transition:width .4s ease;
+  background:linear-gradient(90deg,#f1c40f,#e67e22)}
+.upg-skill-bar-fill.maxed{background:linear-gradient(90deg,#2ecc71,#16a085)}
+.upg-skill-levels{display:flex;gap:4px;margin-top:6px}
+.upg-lvl-dot{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.2);
+  transition:all .3s}
+.upg-lvl-dot.filled{background:#f1c40f;border-color:#f1c40f;box-shadow:0 0 6px #f1c40f}
+.upg-lvl-dot.filled.maxed{background:#2ecc71;border-color:#2ecc71;box-shadow:0 0 6px #2ecc71}
+@keyframes upgFlash{0%{opacity:0;transform:scale(.8)}50%{opacity:1;transform:scale(1.05)}100%{opacity:0;transform:scale(1)}}
+.upg-flash{animation:upgFlash .5s ease-out forwards;position:absolute;inset:0;
+  background:rgba(241,196,15,.15);border-radius:14px;pointer-events:none}
+
 /* ── HUD ── */
 #hud{position:fixed;top:0;left:0;right:0;z-index:100;pointer-events:none;
   display:none;align-items:flex-start;justify-content:space-between;padding:10px 18px}
@@ -159,6 +205,23 @@ canvas{display:block;position:fixed;top:0;left:0}
   </div>
 </div>
 
+<!-- ЭКРАН ПРОКАЧКИ -->
+<div id="upgrade-screen">
+  <div class="upg-header">
+    <button class="upg-back" onclick="closeUpgrade()">← НАЗАД</button>
+    <div class="upg-title" id="upg-title">ПРОКАЧКА</div>
+    <div class="upg-coins" id="upg-coins">💰 0</div>
+  </div>
+  <div class="upg-bird-preview">
+    <canvas class="upg-bird-canvas" id="upg-preview" width="80" height="80"></canvas>
+    <div class="upg-bird-info">
+      <div class="upg-bird-name" id="upg-bname"></div>
+      <div class="upg-bird-skill" id="upg-bskill"></div>
+    </div>
+  </div>
+  <div class="upg-skills" id="upg-skills"></div>
+</div>
+
 <!-- HUD -->
 <div id="hud">
   <div>
@@ -198,9 +261,9 @@ const BIRDS=[
    body:'#1a1a2e',wing:'#0d0d1a',head:'#2c2c54',beak:'#95a5a6',eye:'#6c5ce7',aura:'#6c5ce7',trail:'rgba(108,92,231,.4)'},
 
   {id:'falcon', name:'СОКОЛ',     emoji:'🦅',
-   skill:'Манёвренность x1.35 — прыжок выше и точнее',
+   skill:'Манёвренность x1.05 — точный контролируемый полёт',
    skillIcon:'🎯',
-   jumpM:1.35,gravM:0.9,  hitM:0.9,
+   jumpM:1.05,gravM:0.9,  hitM:0.9,
    gunB:0,   shieldB:0,  ghostB:0,  slowB:0,
    body:'#2c3e50',wing:'#1a252f',head:'#ecf0f1',beak:'#e67e22',eye:'#e74c3c',aura:'#3498db',trail:'rgba(52,73,94,.4)'},
 
@@ -284,15 +347,18 @@ function checkRotate(){
 // ══════════════════════════════════════════
 let GRAV, JUMP, SPEED, GAP, PIPE_INT;
 function recalcPhysics(){
-  // Всё масштабируется от ВЫСОТЫ экрана — одинаково на телефоне и ПК
-  const ref = Math.min(H, W*9/16); // опорный размер = "высота 16:9 окна"
-  const sc  = ref / 450;           // нормировка: sc=1 при высоте 450px
+  // sc нормируется по КОРОТКОЙ стороне экрана
+  // Телефон landscape 844x390: sc = 390/400 = 0.975 ✓
+  // ПК 1440x900: sc = 900/400 = 2.25 — слишком быстро, ограничиваем
+  // ПК 1024x600: sc = 600/400 = 1.5
+  const shortSide = Math.min(W, H);
+  const sc = Math.min(1.6, shortSide / 400);
 
-  GRAV     = 0.15 * sc;   // гравитация пропорциональна экрану
-  JUMP     = -4.2 * sc;   // прыжок пропорционален экрану
-  SPEED    = 2.2  * sc;   // скорость пропорциональна → одинаковое ощущение везде
-  GAP      = Math.max(130*sc, 200*sc); // зазор пропорционален
-  PIPE_INT = 360;          // интервал ФИКСИРОВАННЫЙ в кадрах — одинаково везде
+  GRAV     = 0.15 * sc;
+  JUMP     = -4.2 * sc;
+  SPEED    = 2.4  * sc;
+  GAP      = 200  * sc;
+  PIPE_INT = 360;   // фиксированный интервал в кадрах
 }
 
 // ══════════════════════════════════════════
@@ -334,6 +400,13 @@ let unlockFlashBird = 0;
 let shakeDur   = 0;
 let shakeAmp   = 0;
 let activeSlow = 0;
+
+// Феникс: заряды пробития
+let phoenixCharges = 0;
+
+// Баннер выполненного задания
+let questFlash = 0;
+let questFlashText = '';
 
 // Монеты
 let coins = [];        // монеты на экране
@@ -445,6 +518,8 @@ function onTap(e){
     // Первый тап — старт игры
     STATE = 'playing';
     frame = 0;
+    // Заряды феникса — инициализируем здесь когда birdIdx точно известен
+    phoenixCharges = getSkillLevel(BIRDS[birdIdx].id, 'explode');
     showEl('hud');
     document.getElementById('speedbar').style.display = 'block';
     doFlap();
@@ -458,7 +533,7 @@ function onTap(e){
 
 function doFlap(){
   const bdef = BIRDS[birdIdx];
-  bird.v = JUMP * bdef.jumpM;
+  bird.v = JUMP * getBirdJumpM(bdef.id);
   const b = BIRDS[birdIdx];
   for(let i=0;i<5;i++) particles.push({
     x:bird.x-12, y:bird.y+4,
@@ -514,7 +589,7 @@ function getDifficulty(){
 // ══════════════════════════════════════════
 function updateGame(){
   const bdef = BIRDS[birdIdx];
-  bird.v += GRAV * bdef.gravM;
+  bird.v += GRAV * getBirdGravM(bdef.id);
   bird.y += bird.v;
   bird.wing += .15;
 
@@ -539,7 +614,7 @@ function updateGame(){
   updateBonuses();
   updateCoins();
 
-  const br = Math.min(W,H)/520*9 * BIRDS[birdIdx].hitM;
+  const br = Math.min(W,H)/520*9 * getBirdHitM(BIRDS[birdIdx].id);
 
   for(let i=pipes.length-1; i>=0; i--){
     const p = pipes[i];
@@ -568,6 +643,26 @@ function updateGame(){
         shakeDur=20; shakeAmp=6;
         pipes.splice(i,1); continue;
       }
+      // Феникс: заряды пробития
+      if(phoenixCharges > 0){
+        phoenixCharges--;
+        // Взрываем только эту трубу и её пару (top+bottom)
+        const hitX = p.x;
+        pipes.forEach(pp=>{ if(Math.abs(pp.x - hitX) < 5) pp._destroy=true; });
+        for(let pi=pipes.length-1;pi>=0;pi--){
+          if(pipes[pi]._destroy){
+            const pp=pipes[pi];
+            for(let ei=0;ei<12;ei++) particles.push({
+              x:pp.x+pp.w/2, y:pp.top?pp.h/2:H-pp.h/2,
+              vx:(Math.random()-.5)*14, vy:(Math.random()-.5)*14,
+              r:6+Math.random()*8, col:['#e74c3c','#f39c12','#f1c40f','#fff'][ei%4], life:1
+            });
+            pipes.splice(pi,1);
+          }
+        }
+        lightFlash=10; shakeDur=15; shakeAmp=7;
+        return; // не умираем, тратим заряд
+      }
       triggerDeath(); return;
     }
 
@@ -577,6 +672,7 @@ function updateGame(){
       document.getElementById('hud-score').textContent = score;
       updateComboUI();
       spawnPts();
+      checkQuestsMidGame();
       // Спидбар = прогресс внутри текущего уровня (0..100%)
       const progressTo100 = (score % 100) / 100 * 100;
       document.getElementById('speedbar-fill').style.width = progressTo100+'%';
@@ -601,9 +697,10 @@ function updateGame(){
       if(bonuses.length < 3 && Math.random() < 0.14){
         spawnBonus();
       }
-      // Монета — ~30% шанс при каждой трубе
-      if(Math.random() < 0.30){
-        spawnCoin(p.x - diff.pw, H*0.1 + Math.random()*H*0.8);
+      // Монеты — спавним при прохождении (уже видны игроку)
+      if(Math.random() < 0.55){
+        const coinX = bird.x + W*0.35 + Math.random()*W*0.15;
+        spawnCoin(coinX, H*0.12 + Math.random()*H*0.76);
       }
     }
     if(p.x < -p.w-10) pipes.splice(i,1);
@@ -697,36 +794,97 @@ function saveDailyState(s){ localStorage.setItem(DAILY_KEY, JSON.stringify(s)); 
 function checkDailyQuests(){
   const today = new Date().toDateString();
   let st = getDailyState();
-  if(st.date !== today){ st = {date:today, done:{}}; }
+  if(!st||st.date !== today){ st = {date:today, done:{}}; }
   let earned = 0;
+  let newDone = [];
   QUEST_DEFS.forEach(q=>{
     if(!st.done[q.id] && q.check(score, sessionCoins, sessionBonusCount)){
       st.done[q.id] = true;
       earned += q.reward;
+      newDone.push(q);
     }
   });
-  if(earned>0){ addCoins(earned); saveDailyState(st); }
+  if(earned>0){
+    addCoins(earned);
+    saveDailyState(st);
+    // Баннер
+    questFlashText = '📋 ЗАДАНИЕ: '+newDone.map(q=>q.text).join(' & ')+' +'+earned+'💰';
+    questFlash = 210;
+  }
   saveDailyState(st);
   return st;
 }
 
+// Проверяем задания в реальном времени (раз в трубу — уже есть в score++)
+// Дополнительно — проверяем прямо во время игры при подборе монет
+function checkQuestsMidGame(){
+  const today = new Date().toDateString();
+  let st = getDailyState();
+  if(!st||st.date !== today){ st = {date:today, done:{}}; saveDailyState(st); }
+  QUEST_DEFS.forEach(q=>{
+    if(!st.done[q.id] && q.check(score, sessionCoins, sessionBonusCount)){
+      st.done[q.id] = true;
+      addCoins(q.reward);
+      saveDailyState(st);
+      questFlashText = '📋 '+q.text+' +'+q.reward+'💰';
+      questFlash = 210;
+    }
+  });
+}
+
 function drawDailyHud(){
-  // Показываем активные задания в левом нижнем углу (до бонус-баров)
   if(STATE!=='playing') return;
   const today = new Date().toDateString();
   let st = getDailyState();
-  if(st.date !== today) return;
-  const fs = Math.min(W,H)*0.022;
-  let pending = QUEST_DEFS.filter(q=>!st.done||!st.done[q.id]).slice(0,2);
-  pending.forEach((q,i)=>{
-    const y = H - fs*1.8*(pending.length-i) - fs*0.3;
+  // Если нет данных за сегодня — создаём пустой стейт (задания ещё не выполнены)
+  if(!st||st.date!==today){ st = {date:today, done:{}}; }
+  const fs = Math.min(W,H)*0.02;
+
+  // Баннер выполненного задания (по центру вверху)
+  if(questFlash>0){
+    questFlash--;
+    const alpha = Math.min(1, questFlash/30) * Math.min(1,(questFlash>150?1:questFlash/40));
     CX.save();
-    CX.fillStyle='rgba(0,0,0,.45)';
-    CX.fillRect(8, y, Math.min(W*0.55,280), fs*1.4);
-    CX.fillStyle='rgba(241,196,15,.85)';
+    CX.globalAlpha=alpha;
+    const tw = CX.measureText(questFlashText).length;
+    CX.font='700 '+fs*1.1+'px Arial';
+    const bw=Math.min(W*0.85, CX.measureText(questFlashText).width+fs*2);
+    const bh=fs*1.8, bx=W/2-bw/2, by=fs*3.5;
+    CX.fillStyle='rgba(0,0,0,.75)';
+    // скруглённый прямоугольник
+    const rd=bh/2;
+    CX.beginPath();
+    CX.moveTo(bx+rd,by); CX.lineTo(bx+bw-rd,by);
+    CX.quadraticCurveTo(bx+bw,by,bx+bw,by+rd);
+    CX.lineTo(bx+bw,by+bh-rd);
+    CX.quadraticCurveTo(bx+bw,by+bh,bx+bw-rd,by+bh);
+    CX.lineTo(bx+rd,by+bh); CX.quadraticCurveTo(bx,by+bh,bx,by+bh-rd);
+    CX.lineTo(bx,by+rd); CX.quadraticCurveTo(bx,by,bx+rd,by);
+    CX.closePath(); CX.fill();
+    CX.strokeStyle='rgba(241,196,15,.6)'; CX.lineWidth=1.5; CX.stroke();
+    CX.fillStyle='#f1c40f'; CX.textAlign='center'; CX.textBaseline='middle';
+    CX.shadowBlur=8; CX.shadowColor='#f1c40f';
+    CX.fillText(questFlashText, W/2, by+bh/2);
+    CX.shadowBlur=0;
+    CX.restore();
+  }
+
+  // Активные задания слева снизу (маленькие, с наградой)
+  const pending = QUEST_DEFS.filter(q=>!(st.done&&st.done[q.id])).slice(0,2);
+  if(!pending.length) return;
+  const lineH = fs*1.5;
+  pending.forEach((q,i)=>{
+    const y = H*0.62 + i*lineH;
+    CX.save();
+    CX.fillStyle='rgba(0,0,0,.5)';
+    CX.fillRect(6, y, Math.min(W*0.52,260), lineH*0.9);
     CX.font='600 '+fs+'px Arial';
-    CX.textBaseline='middle';
-    CX.fillText('📋 '+q.text, 12, y+fs*0.7);
+    CX.textBaseline='middle'; CX.fillStyle='rgba(255,255,255,.75)';
+    CX.fillText('📋 '+q.text, 10, y+lineH*0.45);
+    // Награда справа
+    CX.textAlign='right'; CX.fillStyle='#f1c40f';
+    CX.fillText('+'+q.reward+'💰', 6+Math.min(W*0.52,260)-4, y+lineH*0.45);
+    CX.textAlign='left';
     CX.restore();
   });
 }
@@ -1050,6 +1208,316 @@ function drawParticles(){
 
 // ══════════════════════════════════════════
 // ПРЕДПРОСМОТР ПТИЦЫ В МЕНЮ
+
+// ══════════════════════════════════════════
+// СИСТЕМА ПРОКАЧКИ ПТИЦ
+// ══════════════════════════════════════════
+// Навыки прокачки — у каждой птицы своих 4 навыка
+// levels: текущий уровень 0..maxLvl
+// cost[i]: цена i-го уровня
+// effect: описание каждого уровня
+
+const UPGRADE_DEFS = {
+  eagle: [
+    { id:'jump',  icon:'🦘', name:'МАНЁВРЕННОСТЬ',   desc:'Прыжок становится выше и точнее',
+      maxLvl:5, costs:[30,50,80,120,200],
+      vals:[1.0,1.12,1.22,1.32,1.42,1.55], valDesc:['базовый','×1.12','×1.22','×1.32','×1.42','×1.55 МАКС'] },
+    { id:'hitbox',icon:'🎯', name:'МАЛЫЙ ХИТБОКС',   desc:'Уменьшает зону столкновения',
+      maxLvl:4, costs:[40,70,110,180],
+      vals:[1.0,0.9,0.8,0.7,0.6], valDesc:['×1.0','×0.9','×0.8','×0.7','×0.6 МАКС'] },
+    { id:'coin',  icon:'💰', name:'ЗОЛОТОЕ ЧУТЬЁ',   desc:'Монеты летят к птице сами',
+      maxLvl:3, costs:[60,100,160],
+      vals:[0,30,60,100], valDesc:['нет','радиус 30','радиус 60','радиус 100 МАКС'] },
+    { id:'grav',  icon:'🌊', name:'ЛЁГКОСТЬ ПОЛЁТА', desc:'Снижает гравитацию',
+      maxLvl:4, costs:[35,60,95,150],
+      vals:[1.0,0.92,0.85,0.78,0.72], valDesc:['×1.0','×0.92','×0.85','×0.78','×0.72 МАКС'] },
+  ],
+  phoenix: [
+    { id:'gunDur',icon:'🔥', name:'ДЛИНА ОГНЯ',      desc:'Увеличивает время пушки',
+      maxLvl:5, costs:[30,50,80,120,200],
+      vals:[1.0,1.3,1.6,2.0,2.5,3.0], valDesc:['×1','×1.3','×1.6','×2.0','×2.5','×3.0 МАКС'] },
+    { id:'jump',  icon:'🦘', name:'ОГНЕННЫЙ ПРЫЖОК', desc:'Прыжок выше + частицы огня',
+      maxLvl:4, costs:[40,70,110,180],
+      vals:[1.0,1.1,1.2,1.3,1.4], valDesc:['базовый','×1.1','×1.2','×1.3','×1.4 МАКС'] },
+    { id:'explode',icon:'💣',name:'ОГНЕННЫЙ ЗАРЯД',desc:'При столкновении с трубой — взрывает её (не умираешь)',
+      maxLvl:3, costs:[80,140,220],
+      vals:[0,1,2,3], valDesc:['нет','1 заряд','2 заряда','3 заряда МАКС'] },
+    { id:'coin',  icon:'💰', name:'ПЕПЕЛ В ЗОЛОТО',  desc:'Монеты за уничтожение трубы пушкой',
+      maxLvl:3, costs:[50,90,140],
+      vals:[0,1,2,3], valDesc:['нет','+1 монета','+2 монеты','+3 монеты МАКС'] },
+  ],
+  raven: [
+    { id:'ghostDur',icon:'👻',name:'ДЛИНА ПРИЗРАКА', desc:'Увеличивает время невидимости',
+      maxLvl:5, costs:[30,50,80,120,200],
+      vals:[1.0,1.3,1.6,2.0,2.5,3.0], valDesc:['×1','×1.3','×1.6','×2.0','×2.5','×3.0 МАКС'] },
+    { id:'hitbox',icon:'🌑', name:'ТЕНЬ',            desc:'Хитбокс ещё меньше в ночное время',
+      maxLvl:4, costs:[40,70,110,180],
+      vals:[1.0,0.88,0.78,0.68,0.58], valDesc:['×1.0','×0.88','×0.78','×0.68','×0.58 МАКС'] },
+    { id:'jump',  icon:'🌪️', name:'ВИХРЬ',          desc:'Прыжок и падение быстрее — точнее',
+      maxLvl:3, costs:[50,90,150],
+      vals:[1.0,1.15,1.28,1.4], valDesc:['базовый','×1.15','×1.28','×1.4 МАКС'] },
+    { id:'coin',  icon:'💎', name:'ТЕНЕВОЙ ГРАБЁЖ',  desc:'Монеты во время призрака стоят больше',
+      maxLvl:3, costs:[60,110,180],
+      vals:[1,2,3,4], valDesc:['×1','×2','×3','×4 МАКС'] },
+  ],
+  falcon: [
+    { id:'jump',  icon:'🎯', name:'ТОЧНОСТЬ',        desc:'Прыжок максимально точный',
+      maxLvl:5, costs:[25,45,70,110,170],
+      vals:[1.05,1.12,1.19,1.26,1.33,1.4], valDesc:['×1.05','×1.12','×1.19','×1.26','×1.33','×1.4 МАКС'] },
+    { id:'grav',  icon:'⚡', name:'ПИКИРОВАНИЕ',     desc:'Ускоряет падение для резких манёвров',
+      maxLvl:4, costs:[35,60,95,150],
+      vals:[0.9,0.82,0.75,0.68,0.62], valDesc:['×0.9','×0.82','×0.75','×0.68','×0.62 МАКС'] },
+    { id:'hitbox',icon:'🔵', name:'АЭРОДИНАМИКА',    desc:'Минимальный хитбокс сокола',
+      maxLvl:4, costs:[45,80,125,200],
+      vals:[0.9,0.8,0.72,0.64,0.56], valDesc:['×0.9','×0.8','×0.72','×0.64','×0.56 МАКС'] },
+    { id:'coin',  icon:'🏅', name:'ОХОТНИК',         desc:'Монеты притягиваются к соколу',
+      maxLvl:3, costs:[55,95,160],
+      vals:[0,40,75,120], valDesc:['нет','радиус 40','радиус 75','радиус 120 МАКС'] },
+  ],
+  parrot: [
+    { id:'slowDur',icon:'⏳',name:'ВЕЧНОЕ ЗАМЕДЛ.',  desc:'Увеличивает время замедления',
+      maxLvl:5, costs:[30,50,80,120,200],
+      vals:[1.0,1.3,1.6,2.0,2.5,3.0], valDesc:['×1','×1.3','×1.6','×2.0','×2.5','×3.0 МАКС'] },
+    { id:'jump',  icon:'🦜', name:'ПОПУГАЙСКИЙ ПОЛЁТ',desc:'Лёгкий быстрый прыжок',
+      maxLvl:4, costs:[40,70,110,180],
+      vals:[0.95,1.05,1.15,1.24,1.32], valDesc:['×0.95','×1.05','×1.15','×1.24','×1.32 МАКС'] },
+    { id:'coin',  icon:'🍀', name:'УДАЧА',           desc:'Больше монет во время замедления',
+      maxLvl:3, costs:[50,90,150],
+      vals:[1,2,3,5], valDesc:['×1','×2','×3','×5 МАКС'] },
+    { id:'grav',  icon:'🌈', name:'ПОРХАНИЕ',        desc:'Плавное снижение гравитации',
+      maxLvl:4, costs:[40,70,110,175],
+      vals:[1.0,0.93,0.86,0.80,0.74], valDesc:['×1.0','×0.93','×0.86','×0.80','×0.74 МАКС'] },
+  ],
+  storm: [
+    { id:'shieldDur',icon:'⛈️',name:'МОЩЬ ЩИТА',    desc:'Увеличивает время щита',
+      maxLvl:5, costs:[30,50,80,120,200],
+      vals:[1.0,1.3,1.6,2.0,2.5,3.0], valDesc:['×1','×1.3','×1.6','×2.0','×2.5','×3.0 МАКС'] },
+    { id:'shieldHits',icon:'🛡',name:'МНОГОУДАР',    desc:'Щит выдерживает несколько ударов',
+      maxLvl:3, costs:[100,180,280],
+      vals:[1,2,3,4], valDesc:['1 удар','2 удара','3 удара','4 удара МАКС'] },
+    { id:'jump',  icon:'🌩️', name:'БУРЕВОЙ ВЗЛЁТ',  desc:'Мощный прыжок сквозь ветер',
+      maxLvl:4, costs:[40,70,110,180],
+      vals:[1.0,1.1,1.2,1.3,1.4], valDesc:['×1.0','×1.1','×1.2','×1.3','×1.4 МАКС'] },
+    { id:'coin',  icon:'⚡', name:'РАЗРЯД',          desc:'Монеты при активном щите × бонус',
+      maxLvl:3, costs:[60,110,175],
+      vals:[1,2,3,4], valDesc:['×1','×2','×3','×4 МАКС'] },
+  ],
+  ice: [
+    { id:'hitbox',icon:'❄️', name:'ЛЕДЯНОЕ ТЕЛО',    desc:'Сверхмалый хитбокс',
+      maxLvl:5, costs:[25,45,70,110,170],
+      vals:[0.7,0.62,0.54,0.46,0.4,0.34], valDesc:['×0.7','×0.62','×0.54','×0.46','×0.40','×0.34 МАКС'] },
+    { id:'slowDur',icon:'🧊',name:'ВЕЧНАЯ ЗИМА',     desc:'Замедление длится дольше',
+      maxLvl:4, costs:[35,60,95,150],
+      vals:[1.0,1.35,1.7,2.1,2.6], valDesc:['×1.0','×1.35','×1.7','×2.1','×2.6 МАКС'] },
+    { id:'jump',  icon:'🏔️', name:'ЛЕДЯНОЙ ПРЫЖОК', desc:'Скользкий стремительный взлёт',
+      maxLvl:4, costs:[40,70,110,180],
+      vals:[1.05,1.16,1.27,1.38,1.5], valDesc:['×1.05','×1.16','×1.27','×1.38','×1.5 МАКС'] },
+    { id:'coin',  icon:'💠', name:'ХРУСТАЛЬНЫЙ ЛЁД', desc:'Монеты замораживаются и стоят дороже',
+      maxLvl:3, costs:[55,95,155],
+      vals:[1,2,3,4], valDesc:['×1','×2','×3','×4 МАКС'] },
+  ],
+  golden: [
+    { id:'allBonus',icon:'👑',name:'КОРОЛЕВСКИЙ ДАР', desc:'Все навыки работают дольше',
+      maxLvl:5, costs:[50,90,140,210,320],
+      vals:[1.0,1.2,1.4,1.7,2.1,2.6], valDesc:['×1.0','×1.2','×1.4','×1.7','×2.1','×2.6 МАКС'] },
+    { id:'coin',  icon:'✨', name:'ЗОЛОТОЕ ПРИКОСНОВЕНИЕ',desc:'Монеты стоят намного больше',
+      maxLvl:4, costs:[60,110,170,260],
+      vals:[1,2,3,5,8], valDesc:['×1','×2','×3','×5','×8 МАКС'] },
+    { id:'hitbox',icon:'🌟', name:'НЕУЯЗВИМОСТЬ',    desc:'Золотой ореол уменьшает хитбокс',
+      maxLvl:4, costs:[55,95,150,240],
+      vals:[0.8,0.72,0.64,0.56,0.48], valDesc:['×0.8','×0.72','×0.64','×0.56','×0.48 МАКС'] },
+    { id:'jump',  icon:'🦅', name:'ЗОЛОТЫЕ КРЫЛЬЯ',  desc:'Прыжок лёгкий как перо',
+      maxLvl:4, costs:[45,80,125,200],
+      vals:[1.1,1.22,1.34,1.46,1.6], valDesc:['×1.1','×1.22','×1.34','×1.46','×1.6 МАКС'] },
+  ],
+};
+
+const UPG_SAVE_KEY = 'buria_upgrades_v1';
+function getUpgrades(){
+  try{ return JSON.parse(localStorage.getItem(UPG_SAVE_KEY)||'{}'); }catch(e){ return {}; }
+}
+function saveUpgrades(u){ localStorage.setItem(UPG_SAVE_KEY, JSON.stringify(u)); }
+
+function getSkillLevel(birdId, skillId){
+  const u = getUpgrades();
+  return (u[birdId]&&u[birdId][skillId]) || 0;
+}
+function setSkillLevel(birdId, skillId, lvl){
+  const u = getUpgrades();
+  if(!u[birdId]) u[birdId]={};
+  u[birdId][skillId]=lvl;
+  saveUpgrades(u);
+}
+
+// Получить реальное значение навыка для текущей птицы
+function getBirdStat(birdId, statId, defaultVal){
+  const defs = UPGRADE_DEFS[birdId];
+  if(!defs) return defaultVal;
+  const def = defs.find(d=>d.id===statId);
+  if(!def) return defaultVal;
+  const lvl = getSkillLevel(birdId, statId);
+  return def.vals[lvl];
+}
+
+// Применяем прокачку к реальным параметрам птицы в полёте
+function getBirdJumpM(birdId){
+  const base = BIRDS.find(b=>b.id===birdId).jumpM;
+  const upg  = getBirdStat(birdId,'jump',1.0);
+  return base * upg;
+}
+function getBirdGravM(birdId){
+  const base = BIRDS.find(b=>b.id===birdId).gravM;
+  const upg  = getBirdStat(birdId,'grav',1.0);
+  return base * upg;
+}
+function getBirdHitM(birdId){
+  const base = BIRDS.find(b=>b.id===birdId).hitM;
+  const upg  = getBirdStat(birdId,'hitbox',1.0);
+  return base * upg;
+}
+function getBirdCoinRadius(birdId){
+  return getBirdStat(birdId,'coin',0);
+}
+
+// ── Открыть экран прокачки ──
+let upgradeAnimFrame = null;
+let upgParticles = [];
+
+function openUpgrade(idx){
+  const b = BIRDS[idx];
+  document.getElementById('upg-title').textContent = b.emoji+' ПРОКАЧКА';
+  document.getElementById('upg-bname').textContent = b.name;
+  document.getElementById('upg-bskill').textContent = b.skillIcon+' '+b.skill;
+  document.getElementById('upg-coins').textContent = '💰 '+getTotalCoins();
+
+  // Превью птицы
+  const cv = document.getElementById('upg-preview');
+  drawPreview(b, cv, false);
+
+  // Рендер навыков
+  renderUpgradeSkills(idx);
+  hideEl('menu');
+  showEl('upgrade-screen');
+
+  // Анимация частиц в превью
+  startUpgradeAnim(cv, b);
+}
+
+function closeUpgrade(){
+  if(upgradeAnimFrame){ cancelAnimationFrame(upgradeAnimFrame); upgradeAnimFrame=null; }
+  hideEl('upgrade-screen');
+  buildSelector();
+  showEl('menu');
+}
+
+function renderUpgradeSkills(idx){
+  const b = BIRDS[idx];
+  const defs = UPGRADE_DEFS[b.id] || [];
+  const container = document.getElementById('upg-skills');
+  container.innerHTML='';
+
+  defs.forEach((def,di)=>{
+    const lvl = getSkillLevel(b.id, def.id);
+    const maxed = lvl >= def.maxLvl;
+    const cost  = maxed ? 0 : def.costs[lvl];
+    const canAfford = getTotalCoins() >= cost;
+
+    const card = document.createElement('div');
+    card.className = 'upg-skill'+(maxed?' maxed':'');
+    card.id = 'upg-skill-'+di;
+
+    // Полоса прогресса (анимированная)
+    const pct = (lvl/def.maxLvl*100);
+    const dotHtml = Array.from({length:def.maxLvl},(_,i)=>
+      `<div class="upg-lvl-dot${i<lvl?' filled'+(maxed?' maxed':''):''}"></div>`
+    ).join('');
+
+    card.innerHTML = `
+      <div class="upg-skill-header">
+        <div class="upg-skill-icon">${def.icon}</div>
+        <div class="upg-skill-name">${def.name}</div>
+        <div class="upg-skill-cost ${maxed?'maxed':''}">${maxed?'✅ МАКС':(!canAfford?'<span style="color:rgba(255,100,100,.8)">💰'+cost+'</span>':'💰'+cost)}</div>
+      </div>
+      <div class="upg-skill-desc">${def.desc} — сейчас: <b style="color:#f1c40f">${def.valDesc[lvl]}</b>${!maxed?', след: <span style="color:#2ecc71">'+def.valDesc[lvl+1]+'</span>':''}</div>
+      <div class="upg-skill-bar"><div class="upg-skill-bar-fill${maxed?' maxed':''}" style="width:${pct}%"></div></div>
+      <div class="upg-skill-levels">${dotHtml}</div>
+    `;
+
+    if(!maxed){
+      card.onclick = ()=> buyUpgrade(idx, di, card);
+    }
+    container.appendChild(card);
+
+    // Анимируем полосу через небольшую задержку
+    setTimeout(()=>{
+      const bar = card.querySelector('.upg-skill-bar-fill');
+      if(bar){ bar.style.width='0%'; setTimeout(()=>{ bar.style.width=pct+'%'; },50+di*80); }
+    },10);
+  });
+}
+
+function buyUpgrade(birdIdx2, defIdx, card){
+  const b    = BIRDS[birdIdx2];
+  const def  = UPGRADE_DEFS[b.id][defIdx];
+  const lvl  = getSkillLevel(b.id, def.id);
+  if(lvl >= def.maxLvl) return;
+  const cost = def.costs[lvl];
+  if(getTotalCoins() < cost){ shakeCard(card); return; }
+
+  // Снимаем монеты и повышаем уровень
+  addCoins(-cost);
+  setSkillLevel(b.id, def.id, lvl+1);
+
+  // Вспышка на карточке
+  const flash = document.createElement('div');
+  flash.className='upg-flash';
+  card.appendChild(flash);
+  setTimeout(()=>flash.remove(),600);
+
+  // Обновляем UI
+  document.getElementById('upg-coins').textContent = '💰 '+getTotalCoins();
+  renderUpgradeSkills(birdIdx2);
+}
+
+function shakeCard(card){
+  card.style.transition='none';
+  card.style.transform='translateX(-8px)';
+  setTimeout(()=>{ card.style.transform='translateX(6px)'; },80);
+  setTimeout(()=>{ card.style.transform='translateX(-4px)'; },160);
+  setTimeout(()=>{ card.style.transform='translateX(0)'; card.style.transition='all .2s'; },240);
+}
+
+function startUpgradeAnim(cv, b){
+  const c2 = cv.getContext('2d');
+  let t=0;
+  function anim(){
+    c2.clearRect(0,0,80,80);
+    // Аура пульсирует
+    if(b.aura){
+      c2.save();
+      c2.globalAlpha=0.3+Math.sin(t*.08)*0.2;
+      c2.shadowBlur=20+Math.sin(t*.06)*10; c2.shadowColor=b.aura;
+      c2.strokeStyle=b.aura; c2.lineWidth=2;
+      c2.beginPath(); c2.arc(40,40,28+Math.sin(t*.05)*3,0,Math.PI*2); c2.stroke();
+      c2.shadowBlur=0; c2.restore();
+    }
+    // Птица
+    c2.save(); c2.translate(40,40);
+    const wf = Math.sin(t*.12)*18;
+    c2.fillStyle=b.wing; c2.beginPath(); c2.moveTo(-18,0); c2.quadraticCurveTo(0,-wf-18,18,0); c2.fill();
+    c2.fillStyle=b.body; c2.beginPath(); c2.ellipse(0,0,22,9,0,0,Math.PI*2); c2.fill();
+    c2.fillStyle=b.head; c2.beginPath(); c2.arc(15,-4,9,0,Math.PI*2); c2.fill();
+    c2.fillStyle=b.beak; c2.beginPath(); c2.moveTo(22,-4); c2.lineTo(32,-1); c2.lineTo(22,2); c2.fill();
+    c2.fillStyle=b.eye;  c2.beginPath(); c2.arc(18,-5,2.5,0,Math.PI*2); c2.fill();
+    c2.fillStyle='#fff'; c2.beginPath(); c2.arc(19,-5.5,1,0,Math.PI*2); c2.fill();
+    c2.restore();
+    t++;
+    upgradeAnimFrame = requestAnimationFrame(anim);
+  }
+  if(upgradeAnimFrame) cancelAnimationFrame(upgradeAnimFrame);
+  anim();
+}
+
 // ══════════════════════════════════════════
 function buildSelector(){
   const grid=document.getElementById('sel-grid');
@@ -1080,11 +1548,26 @@ function buildSelector(){
     }
     div.append(cv,nm,sk);
     if(!locked){
-      div.onclick=()=>{
-        document.querySelectorAll('.sel-card').forEach(c=>c.classList.remove('active'));
-        div.classList.add('active');
-        birdIdx=i;
+      const hint=document.createElement('div');
+      hint.style.cssText='font-size:8px;color:rgba(241,196,15,.5);margin-top:3px;letter-spacing:1px';
+      hint.textContent='✦ удержи → прокачка';
+      div.appendChild(hint);
+    }
+    if(!locked){
+      let pressTimer=null;
+      // Короткий клик — выбрать
+      // Долгое нажатие (400мс) или двойной клик — прокачка
+      div.ondblclick = ()=> openUpgrade(i);
+      div.onmousedown = div.ontouchstart = ()=>{
+        pressTimer=setTimeout(()=>{ pressTimer=null; openUpgrade(i); },500);
       };
+      div.onmouseup = div.ontouchend = ()=>{
+        if(pressTimer){ clearTimeout(pressTimer); pressTimer=null;
+          document.querySelectorAll('.sel-card').forEach(c=>c.classList.remove('active'));
+          div.classList.add('active'); birdIdx=i;
+        }
+      };
+      div.onmouseleave = ()=>{ if(pressTimer){ clearTimeout(pressTimer); pressTimer=null; } };
     }
     grid.appendChild(div);
     drawPreview(b,cv,locked);
@@ -1178,7 +1661,7 @@ function collectBonus(type){
 }
 
 function spawnCoin(x, y){
-  coins.push({ x: x||W+10, y, pulse:Math.random()*Math.PI*2, r:Math.min(W,H)*0.018 });
+  coins.push({ x: x||W+10, y, pulse:Math.random()*Math.PI*2, r:Math.min(W,H)*0.048 });
 }
 
 function updateCoins(){
@@ -1189,7 +1672,10 @@ function updateCoins(){
     co.x -= spd;
     co.pulse += 0.1;
     const dx=bird.x-co.x, dy=bird.y-co.y;
-    if(Math.sqrt(dx*dx+dy*dy) < co.r + br){
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    const magnet=getBirdCoinRadius(BIRDS[birdIdx].id);
+    if(magnet>0 && dist < magnet){ co.x+=dx*0.12; co.y+=dy*0.12; }
+    if(dist < co.r + br){
       sessionCoins++;
       addCoins(1);
       // Частицы
@@ -1226,15 +1712,47 @@ function drawCoins(){
 
 function drawCoinHud(){
   if(STATE!=='playing'&&STATE!=='over') return;
-  const fs=Math.min(W,H)*0.028;
-  const total=getTotalCoins();
+  const fs  = Math.min(W,H)*0.026;
+  const pad = fs*0.6;
+  const total = getTotalCoins();
+  const text  = '+'+sessionCoins+'  💰'+total;
   CX.save();
-  CX.textAlign='right'; CX.textBaseline='top';
   CX.font='700 '+fs+'px Arial';
-  CX.fillStyle='rgba(0,0,0,.4)';
-  CX.fillRect(W-fs*6.5, fs*2.2, fs*6, fs*1.5);
-  CX.fillStyle='#f1c40f'; CX.shadowBlur=6; CX.shadowColor='#f1c40f';
-  CX.fillText('💰 '+sessionCoins+' ('+total+')', W-fs*0.4, fs*2.4);
+  CX.textAlign='center'; CX.textBaseline='middle';
+  const tw = CX.measureText(text).width;
+  const pw = tw + pad*3;
+  const ph = fs*1.5;
+  const px = W/2 - pw/2;
+  const py = H - ph - fs*0.5; // нижний центр
+
+  // Пилюля-фон с градиентом
+  const gr = CX.createLinearGradient(px,py,px+pw,py+ph);
+  gr.addColorStop(0,'rgba(20,10,0,.75)');
+  gr.addColorStop(1,'rgba(40,25,0,.75)');
+  CX.fillStyle=gr;
+  // Скруглённый прямоугольник
+  const rd=ph/2;
+  CX.beginPath();
+  CX.moveTo(px+rd,py);
+  CX.lineTo(px+pw-rd,py);
+  CX.quadraticCurveTo(px+pw,py,px+pw,py+rd);
+  CX.lineTo(px+pw,py+ph-rd);
+  CX.quadraticCurveTo(px+pw,py+ph,px+pw-rd,py+ph);
+  CX.lineTo(px+rd,py+ph);
+  CX.quadraticCurveTo(px,py+ph,px,py+ph-rd);
+  CX.lineTo(px,py+rd);
+  CX.quadraticCurveTo(px,py,px+rd,py);
+  CX.closePath();
+  CX.fill();
+
+  // Обводка золотая
+  CX.strokeStyle='rgba(241,196,15,.35)'; CX.lineWidth=1.5;
+  CX.stroke();
+
+  // Текст
+  CX.shadowBlur=8; CX.shadowColor='rgba(241,196,15,.6)';
+  CX.fillStyle='#f1c40f';
+  CX.fillText(text, W/2, py+ph/2);
   CX.shadowBlur=0;
   CX.restore();
 }
@@ -1263,6 +1781,45 @@ function drawBonuses(){
     CX.textAlign='left'; CX.textBaseline='alphabetic';
     CX.restore();
   });
+}
+
+function drawPhoenixCharges(){
+  if(STATE!=='playing'&&STATE!=='over') return;
+  if(BIRDS[birdIdx].id !== 'phoenix') return;
+  const maxC = getSkillLevel('phoenix','explode');
+  if(maxC === 0) return;
+  const r = Math.min(W,H)*0.022;
+  const gap = r*2.6;
+  const totalW = maxC*gap - (gap-r*2);
+  let sx = W/2 - totalW/2 + r;
+  const sy = Math.min(W,H)*0.14;
+  for(let i=0;i<maxC;i++){
+    const filled = i < phoenixCharges;
+    CX.save();
+    if(filled){
+      CX.shadowBlur=18; CX.shadowColor='#ff6b35';
+      CX.fillStyle='#f39c12';
+    } else {
+      CX.globalAlpha=0.25;
+      CX.fillStyle='#7f3a1a';
+    }
+    CX.beginPath(); CX.arc(sx+i*gap, sy, r, 0, Math.PI*2); CX.fill();
+    if(filled){
+      // Внутренний блик
+      CX.shadowBlur=0;
+      CX.fillStyle='rgba(255,220,100,.6)';
+      CX.beginPath(); CX.arc(sx+i*gap-r*0.3, sy-r*0.3, r*0.4, 0, Math.PI*2); CX.fill();
+    }
+    CX.shadowBlur=0; CX.globalAlpha=1;
+    CX.restore();
+  }
+  // Подпись
+  CX.save();
+  CX.font='600 '+Math.min(W,H)*0.018+'px Arial';
+  CX.textAlign='center'; CX.textBaseline='top';
+  CX.fillStyle='rgba(255,150,50,.7)';
+  CX.fillText('🔥 ЗАРЯДЫ', W/2, sy+r+4);
+  CX.textAlign='left'; CX.restore();
 }
 
 function drawActiveBonuses(){
@@ -1358,6 +1915,7 @@ function loop(){
     drawBonuses();
     drawParticles();
     drawActiveBonuses();
+    drawPhoenixCharges();
     drawCoinHud();
     drawDailyHud();
     drawUnlockBanner();
