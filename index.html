@@ -347,18 +347,16 @@ function checkRotate(){
 // ══════════════════════════════════════════
 let GRAV, JUMP, SPEED, GAP, PIPE_INT;
 function recalcPhysics(){
-  // sc нормируется по КОРОТКОЙ стороне экрана
-  // Телефон landscape 844x390: sc = 390/400 = 0.975 ✓
-  // ПК 1440x900: sc = 900/400 = 2.25 — слишком быстро, ограничиваем
-  // ПК 1024x600: sc = 600/400 = 1.5
+  // sc масштабирует только ощущение птицы (прыжок/гравитация/зазор)
+  // SPEED — фиксирован, одинаков на всех устройствах
   const shortSide = Math.min(W, H);
-  const sc = Math.min(1.6, shortSide / 400);
+  const sc = Math.min(1.5, Math.max(0.8, shortSide / 500));
 
-  GRAV     = 0.15 * sc;
-  JUMP     = -4.2 * sc;
-  SPEED    = 2.4  * sc;
+  GRAV     = 0.18 * sc;   // гравитация под размер экрана
+  JUMP     = -4.8 * sc;   // прыжок под размер экрана
+  SPEED    = 3.5;          // ФИКСИРОВАННАЯ скорость — одинаково везде
   GAP      = 200  * sc;
-  PIPE_INT = 360;   // фиксированный интервал в кадрах
+  PIPE_INT = 360;
 }
 
 // ══════════════════════════════════════════
@@ -874,7 +872,7 @@ function drawDailyHud(){
   if(!pending.length) return;
   const lineH = fs*1.5;
   pending.forEach((q,i)=>{
-    const y = H*0.62 + i*lineH;
+    const y = H - fs*8.5 + i*lineH; // привязка к низу экрана
     CX.save();
     CX.fillStyle='rgba(0,0,0,.5)';
     CX.fillRect(6, y, Math.min(W*0.52,260), lineH*0.9);
@@ -1723,7 +1721,7 @@ function drawCoinHud(){
   const pw = tw + pad*3;
   const ph = fs*1.5;
   const px = W/2 - pw/2;
-  const py = H - ph - fs*0.5; // нижний центр
+  const py = H - ph - fs*3.5; // нижний центр, выше чтобы не перекрывать задания
 
   // Пилюля-фон с градиентом
   const gr = CX.createLinearGradient(px,py,px+pw,py+ph);
@@ -1829,7 +1827,8 @@ function drawActiveBonuses(){
   const drawBar=(type,remain,total)=>{
     if(remain<=0) return;
     const def=BONUS_DEFS[type];
-    const x=14, y=fs*4.5+yi*(fs*1.8), bw=Math.min(W*.25,160), bh=fs*.9;
+    const bw=Math.min(W*.28,170), bh=fs*.9;
+    const x=W-bw-10, y=fs*4.5+yi*(fs*1.8);
     CX.save();
     // Фон
     CX.fillStyle='rgba(0,0,0,.5)';
